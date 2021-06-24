@@ -1,0 +1,283 @@
+---
+title: "STAT 209: Lab 6"
+author: "Colin Dawson"
+date: "June 24, 2021"
+output:
+  html_document:
+    css: ~/stat209/originals/lab.css
+    highlight: pygments
+    theme: cerulean
+    code_folding: hide
+    toc: true
+    toc_float: true
+  pdf_document: default
+---
+
+```{r setup, include = FALSE}
+## This is a setup/formatting chunk
+library(tidyverse)  # We will primarily use the tidyverse and mosaic packages
+
+## Some customization.  (Leave this part alone)
+
+theme_set(theme_bw()) # change theme for ggplot2
+
+## Sets default "chunk options"
+knitr::opts_chunk$set(
+  tidy    = FALSE,       # display code as typed
+  size    = "small",     # slightly smaller font for code
+  message = FALSE)  # suppresses some unwanted output
+```
+
+## Five Data-Wrangling Verbs
+
+### Goal
+
+Gain practice with the five "fundamental verbs" that are the building blocks in the "grammar of data wrangling", as implemented in the `dplyr` package.
+
+The verbs are:
+
+* `filter()`
+* `select()`
+* `mutate()`
+* `arrange()`
+* `summarize()`
+
+### Resources
+
+You will probably want to look at the [reference sheet](http://colindawson.net/stat209/resources/dplyr-quick-reference.pdf) or the [slides](http://colindawson.net/stat209/slides/11-grammar-of-wrangling.pdf) from time to time.  Remember that knowing how to look things up is an important skill!  Nobody memorizes everything.
+
+### The Data
+
+We'll look some more at the `babynames` dataset for this lab.  Let's make sure it (as well as the `tidyverse` package) is loaded in our Markdown document.
+
+**Code:**
+
+```{r, message = FALSE, results = 'hide'}
+library(tidyverse)
+library(babynames)
+# This is a slightly different dataset than on the last lab
+data(babynames) 
+babynames %>% 
+  head(n = 5)
+```
+
+### Extracting subsets with `filter()`
+
+Recall that `filter()` allows us to extract a subset of cases from a dataset, by checking for a particular criterion.  
+
+1. Let's extract "Bella"s who were recorded as female, and display the first few rows with `head()`. The code is available on the Knitted "partial solutions" version of the lab on the website if you need to refer to it, but see if you can do it without peeking first.
+
+---
+
+##### SOLUTION
+
+
+---
+
+If we specify multiple filter conditions separated by a comma or an ampersand (`&`), a case will only be included if it satisfies _all_ of them. If we separate conditions with a vertical bar (`|`), a case will be included if it satisfies _any_ of them. We can make more complex filters by putting parentheses around conjunctions or disjunctions of conditions like this (though not those involving commas -- we'd need to use `&` if we want to do this with an "and" statement), and creating conjunctions or disjunctions of them. 
+
+For example, we could return a dataset consisting of the records about babies named "Joseph" or "Josephine" who were recorded as the opposite sex from the traditional association for those names:
+
+**Code:**
+```{r}
+babynames %>% 
+  filter(
+    (name == "Joseph" & sex == "F") | (name == "Josephine" & sex == "M")
+  )
+```
+
+
+### Selecting variables with `select()`
+
+Recall that `select()` allows us to extract certain columns from a dataset, by listing each variable name we want to include as a separate argument, by listing each variable name we want to exclude, or by defining a condition for inclusion/exclusion.
+
+2. Start with the full `babynames` dataset (so, not just Bellas) and display the first few rows, retaining only the `year`, `name` and `n` variables (again, it's worth trying to do this before looking at my code).
+
+---
+
+##### SOLUTION
+
+
+---
+
+3. Now create a new dataset called `Bellas` that retains just `year` and `n` for the first few years of female Bellas, by chaining `filter()` and `select()` together with pipes, and assigning the result.  Check that the result looks as it should using `head()` (but don't restrict the `Bellas` dataset to the first few rows).
+
+---
+
+##### SOLUTION
+
+
+---
+
+### Defining new variables with `mutate()`
+
+Suppose we want to split the set of name/sex pairs into those that were "popular" in a given year, and those that were not so popular. We will define "popular" for this purpose as being a name that was assigned to at least 1% of all babies of a particular sex (as assigned according to the birth record) that year.  The `prop` variable represents the proportion of births, out of all of those recorded for a given sex, that have the name in question. 
+
+4. Define a new binary variable from `prop` using `mutate()`, and store the resulting dataset in an new R object. The definition of the new variable after the `=` will be in the same form as the condition in a `filter()` expression. Conditional statements like this return `TRUE` or `FALSE` for each case they are evaluated on.
+
+---
+
+##### SOLUTION
+
+
+---
+
+If we decide to change the name a variable is given, we can replace it using the `rename()` function.  For example, let's rename `popular` to `is_popular`.  This function has the following syntax:
+
+```{r, eval = FALSE}
+rename(dataset, newname1 = oldname1, newname2 = oldname2, ...)
+```
+
+or preferably, 
+
+```{r, eval = FALSE}
+dataset %>% 
+    rename(newname1 = oldname1, newname2 = oldname2, ...)
+```
+
+5. Using `babynames_with_popular` from the last exercise, use `rename()` to return a dataset in which `popular` is instead called `is_popular`. Store the new dataset in another R object. (We could be overwriting the original data as we go, but this can lead to issues when running chunks interactively if we don't rerun previous chunks every time, because any time we run a chunk it will use the current version of an object)
+
+---
+
+##### SOLUTION
+
+
+---
+
+6. Create a dataset called `PopularBabynames` that includes only those names that were "popular" in the given year.  Use the new `is_popular` variable to do the filtering, and then remove the variable from the filtered dataset using `select()` since it is now a "constant".
+
+
+---
+
+##### SOLUTION
+
+
+---
+
+### Sorting data with `arrange()`
+
+We can easily see at what point the largest share of births (for a given sex) went to a single name by sorting the dataset by `prop`.  We can use `arrange()` for this.  To arrange in descending order so that the _most_ popular name is at the top, use the `desc()` helper function around the variable name.
+
+**Code:**
+```{r}
+babynames %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+7. Describe precisely what the `prop` variable is telling us here.  What does it mean for a name to be "first" in this list?
+
+---
+
+##### RESPONSE
+
+
+---
+
+8. Find the most popular names for male-recorded births and for female-recorded births in your birth year.
+
+---
+
+##### SOLUTION
+
+
+---
+
+9. Choose a name, sex pair you like (perhaps your own). Find the birth year when that name was most popular for babies recorded as that sex.
+
+---
+
+##### POSSIBLE SOLUTION
+
+---
+
+10. Find the birth year in which the greatest _number_ of babies were born with your name and sex (or name and sex of choice). Explain why it _could_ be different than the year in the last question.
+
+---
+
+##### SOLUTION
+
+---
+
+### Calculating summary statistics with `summarize()`
+
+The `summarize()` verb works a little bit differently than the other four verbs.  Whereas `filter()`, `select()`, `mutate()`, and `arrange()` take in a dataset where the rows are cases and the columns are variables and return a dataset in the same form, `summarize()` takes a dataset where the rows are cases and the columns are variables and returns a dataset with just one row (at least, when it is used by itself), where the columns are summary statistics (things like means, standard deviations, etc.) calculated from all the cases in the input.
+
+**Tip:** When using `summarize()`, it is almost always desirable to return as one of the summary statistics the number of cases in the set being summarized.  Among other things, this can be a quick way to alert you to errors.  The `n()` function (called with no arguments) is a special helper function that does this.
+
+**Note:** The `babynames` data contains a _variable_ called `n`.  Don't confuse this **variable** n with the **function** `n()`.  In fact, to prevent confusion, let's rename the `n` variable to `num_births`.
+
+**Code**
+```{r}
+babynames_no_n <- babynames %>%
+  rename(num_births = n)
+head(babynames_no_n)
+```
+
+Suppose we want to find the year in which the name "Bella" hit its peak for females.  We could do this with `arrange()` and `head()`, or using `summarize()` together with a summary function that returns the value of one variable for the case when another variable is maximized. However, this is a common enough thing to want to do that there is a dedicated function for it, called `slice_max()`.
+
+It has arguments `order_by=` and `n=` to which we give the variable name we want to sort by and the number of cases we want to return.
+
+11. Use `slice_max()` together with other wrangling verbs to produce a dataset that has just a single row and just two three columns: `name`, as well as `peak_year` and `peak_count`, which contain the year with the most female Bellas and the number of female Bellas recorded that year, respectively.
+
+---
+
+##### SOLUTION
+
+
+## Piping Practice
+
+And now for the cake-decorating portion of the lab.  Just kidding.
+
+Recall that when we write
+
+```
+dataset %>% verb(arguments)
+```
+
+this is equivalent to writing
+```
+verb(dataset, arguments)
+```
+
+More generally,
+```
+some_function(main_argument, other_arguments)
+```
+
+is rewritten as
+```
+main_argument %>% some_function(other_arguments)
+```
+
+With just one function it's not clear that the pipe syntax is any clearer, but when we start chaining operations together, writing the verbs from left to right instead of from inside out (which is how we'd have to do it without the pipe) makes the code a whole lot easier to read.
+
+12. Re-write the following mess of a command, which displays a list of the top ten years in which male Colins were born in descending order of the number of male babies named Colin that year, using the pipe operator.
+
+```{r}
+head(
+  select(
+    arrange(
+      filter(
+        babynames_no_n, name == "Colin" & sex == "M"),
+      desc(num_births)),
+    year, num_births),
+  n = 10)
+```
+
+---
+
+##### SOLUTION
+
+
+---
+
+13. Think about how you might address the following question: In which year was a particular name (pick any name) the most balanced between males and females; that is, when was the number of male and female births for that name closest to a 50/50 split? You don't need to write any code, just describe step-by-step what you would need to do. Explain why, given the way this dataset is structured at least, this is **not** a simple matter of filtering and sorting the data by an existing variable, nor is it something that either `mutate()` or `summarize()` can do on their own (at least, not without some ugly hacks).
+
+---
+
+### GENERAL APPROACH (not code, just a procedure)
+
+---
+
+14. Post a comment in the `#lab6` channel identifying the thing you found the most challenging about this lab, as well as (if you want) something you found interesting.
