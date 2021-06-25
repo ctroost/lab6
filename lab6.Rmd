@@ -1,6 +1,6 @@
 ---
 title: "STAT 209: Lab 6"
-author: "Colin Dawson"
+author: "Casey Troost"
 date: "June 24, 2021"
 output:
   html_document:
@@ -68,10 +68,11 @@ Recall that `filter()` allows us to extract a subset of cases from a dataset, by
 1. Let's extract "Bella"s who were recorded as female, and display the first few rows with `head()`. The code is available on the Knitted "partial solutions" version of the lab on the website if you need to refer to it, but see if you can do it without peeking first.
 
 ---
-
 ##### SOLUTION
-
-
+```{r}
+bella_extract <- babynames %>% filter(name == "Bella", sex == "F") %>% head()
+bella_extract
+```
 ---
 
 If we specify multiple filter conditions separated by a comma or an ampersand (`&`), a case will only be included if it satisfies _all_ of them. If we separate conditions with a vertical bar (`|`), a case will be included if it satisfies _any_ of them. We can make more complex filters by putting parentheses around conjunctions or disjunctions of conditions like this (though not those involving commas -- we'd need to use `&` if we want to do this with an "and" statement), and creating conjunctions or disjunctions of them. 
@@ -94,19 +95,20 @@ Recall that `select()` allows us to extract certain columns from a dataset, by l
 2. Start with the full `babynames` dataset (so, not just Bellas) and display the first few rows, retaining only the `year`, `name` and `n` variables (again, it's worth trying to do this before looking at my code).
 
 ---
-
 ##### SOLUTION
-
-
+```{r}
+babynames %>% select("year", "name", "n") %>% head()
+```
 ---
 
 3. Now create a new dataset called `Bellas` that retains just `year` and `n` for the first few years of female Bellas, by chaining `filter()` and `select()` together with pipes, and assigning the result.  Check that the result looks as it should using `head()` (but don't restrict the `Bellas` dataset to the first few rows).
 
 ---
-
 ##### SOLUTION
-
-
+```{r}
+Bellas <- babynames %>% filter(name == "Bella", sex == "F") %>% select("year", "n")
+Bellas
+```
 ---
 
 ### Defining new variables with `mutate()`
@@ -116,18 +118,13 @@ Suppose we want to split the set of name/sex pairs into those that were "popular
 4. Define a new binary variable from `prop` using `mutate()`, and store the resulting dataset in an new R object. The definition of the new variable after the `=` will be in the same form as the condition in a `filter()` expression. Conditional statements like this return `TRUE` or `FALSE` for each case they are evaluated on.
 
 ---
-
 ##### SOLUTION
-
-
+```{r}
+babynames <- babynames %>% mutate(popular = (prop == .01 | prop > .01))
+```
 ---
 
 If we decide to change the name a variable is given, we can replace it using the `rename()` function.  For example, let's rename `popular` to `is_popular`.  This function has the following syntax:
-
-```{r, eval = FALSE}
-rename(dataset, newname1 = oldname1, newname2 = oldname2, ...)
-```
-
 or preferably, 
 
 ```{r, eval = FALSE}
@@ -138,22 +135,20 @@ dataset %>%
 5. Using `babynames_with_popular` from the last exercise, use `rename()` to return a dataset in which `popular` is instead called `is_popular`. Store the new dataset in another R object. (We could be overwriting the original data as we go, but this can lead to issues when running chunks interactively if we don't rerun previous chunks every time, because any time we run a chunk it will use the current version of an object)
 
 ---
-
 ##### SOLUTION
-
-
+```{r}
+babynames_is_popular <- babynames %>% rename(is_popular = popular)
+babynames_is_popular 
+```
 ---
-
 6. Create a dataset called `PopularBabynames` that includes only those names that were "popular" in the given year.  Use the new `is_popular` variable to do the filtering, and then remove the variable from the filtered dataset using `select()` since it is now a "constant".
-
-
 ---
-
 ##### SOLUTION
-
-
+```{r}
+PopularBabynames <- babynames_is_popular %>% filter(is_popular == TRUE) %>% select("year", "sex", "name", "n", "prop")
+PopularBabynames
+```
 ---
-
 ### Sorting data with `arrange()`
 
 We can easily see at what point the largest share of births (for a given sex) went to a single name by sorting the dataset by `prop`.  We can use `arrange()` for this.  To arrange in descending order so that the _most_ popular name is at the top, use the `desc()` helper function around the variable name.
@@ -168,35 +163,37 @@ babynames %>%
 7. Describe precisely what the `prop` variable is telling us here.  What does it mean for a name to be "first" in this list?
 
 ---
-
 ##### RESPONSE
-
-
+The "prop" variable is telling us how common a given name was for all babies of that gender born in that year. Being first in this category means the name was the most popular for that year and gender.
 ---
 
 8. Find the most popular names for male-recorded births and for female-recorded births in your birth year.
 
 ---
-
 ##### SOLUTION
-
+```{r}
+babynames %>% filter(year == 1998) %>% arrange(desc(prop))
+```
 
 ---
 
 9. Choose a name, sex pair you like (perhaps your own). Find the birth year when that name was most popular for babies recorded as that sex.
 
 ---
-
 ##### POSSIBLE SOLUTION
-
+```{r}
+babynames %>% filter(name == "Casey", sex == "F") %>% arrange(desc(prop))
+```
 ---
 
 10. Find the birth year in which the greatest _number_ of babies were born with your name and sex (or name and sex of choice). Explain why it _could_ be different than the year in the last question.
 
 ---
-
 ##### SOLUTION
-
+```{r}
+babynames %>% filter(name == "Casey", sex == "F") %>% arrange(desc(n))
+```
+This could return a different result because of the difference in meaning between a proportion and a tally. Say in 1990 there were an abnormally high number of babies born, so there were 1,000 babies named Casey. But in 1960, there were abnormally few babies, but 50% of them were named Casey.
 ---
 
 ### Calculating summary statistics with `summarize()`
@@ -221,10 +218,19 @@ It has arguments `order_by=` and `n=` to which we give the variable name we want
 11. Use `slice_max()` together with other wrangling verbs to produce a dataset that has just a single row and just two three columns: `name`, as well as `peak_year` and `peak_count`, which contain the year with the most female Bellas and the number of female Bellas recorded that year, respectively.
 
 ---
-
 ##### SOLUTION
-
-
+```{r}
+bella_summary <- babynames_no_n %>% 
+  filter(
+    name == "Bella" & 
+    sex == "F") %>%
+    slice_max(order_by = num_births, n = 1) %>%
+  summarize(n = n(),
+            peak_count = num_births,
+            name = name, 
+            peak_year = year)
+bella_summary
+```
 ## Piping Practice
 
 And now for the cake-decorating portion of the lab.  Just kidding.
@@ -263,21 +269,24 @@ head(
       desc(num_births)),
     year, num_births),
   n = 10)
+
+babynames_no_n %>% 
+  filter(name == "Colin" &
+           sex == "M") %>%
+  arrange(desc(num_births)) %>%
+  select(year, num_births) %>%
+  head(n = 10)
 ```
 
 ---
-
 ##### SOLUTION
-
-
 ---
 
 13. Think about how you might address the following question: In which year was a particular name (pick any name) the most balanced between males and females; that is, when was the number of male and female births for that name closest to a 50/50 split? You don't need to write any code, just describe step-by-step what you would need to do. Explain why, given the way this dataset is structured at least, this is **not** a simple matter of filtering and sorting the data by an existing variable, nor is it something that either `mutate()` or `summarize()` can do on their own (at least, not without some ugly hacks).
 
 ---
-
 ### GENERAL APPROACH (not code, just a procedure)
-
+First, I would take a dataset and filter it for the name, then tell it to group itself by year. Then I would likely select year, sex, and number of babies born to trim down the data frame. Thirdly, I would create a third variable with mutate and left_join that subtracts the number of female babies born from the number of male babies born. Then I would arrange the dataset in ascending order so I get the numbers closest to zero towards the top. 
 ---
 
 14. Post a comment in the `#lab6` channel identifying the thing you found the most challenging about this lab, as well as (if you want) something you found interesting.
